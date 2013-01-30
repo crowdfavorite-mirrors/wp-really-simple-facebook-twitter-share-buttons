@@ -4,7 +4,7 @@ Plugin Name: Really simple Facebook Twitter share buttons
 Plugin URI: http://www.whiletrue.it
 Description: Puts Facebook, Twitter, LinkedIn, Google "+1", Pinterest and other share buttons of your choice above or below your posts.
 Author: WhileTrue
-Version: 2.6.1
+Version: 2.7
 Author URI: http://www.whiletrue.it
 */
 
@@ -50,6 +50,8 @@ if (!$really_simple_share_option['disable_excerpts']) {
 // PUBLIC FUNCTIONS
 
 function really_simple_share_scripts () {
+	really_simple_share_adjust_locale();
+	
 	global $really_simple_share_option;
 
 	$out = '';
@@ -102,7 +104,9 @@ function really_simple_share_scripts () {
 }
 
 function really_simple_share_init() {
-	// DISABLED IN THE ADMIN PAGES
+	load_plugin_textdomain('really-simple-share', false, basename(dirname(__FILE__)).'/lang');
+
+	// THE REST IS DISABLED IN THE ADMIN PAGES
 	if (is_admin()) {
 		wp_enqueue_script('jquery-ui-sortable');
 		return;
@@ -193,6 +197,7 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 	}
 	
 	//GET ARRAY OF STORED VALUES
+	really_simple_share_adjust_locale();
 	global $really_simple_share_option;
 	$option = $really_simple_share_option;
 
@@ -239,7 +244,7 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 	}
 
 	$height = ($option['layout']=='button') ? 33 : 66;
-	$out .= '<div style="height:'.$height.'px;" class="really_simple_share robots-nocontent snap_nopreview">';
+	$out .= '<div style="min-height:'.$height.'px;" class="really_simple_share robots-nocontent snap_nopreview">';
 
 	// PREPEND INLINE TEXT
 	if ($option['prepend_inline']!='') {
@@ -451,6 +456,17 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 	}
 }
 
+
+function really_simple_share_adjust_locale () {
+	if (defined("ICL_LANGUAGE_CODE") and ICL_LANGUAGE_CODE!='') {
+		global $really_simple_share_option, $wpdb, $table_prefix;
+		$full_locale = $wpdb->get_var("select default_locale from ".$table_prefix."icl_languages where code = '".ICL_LANGUAGE_CODE."'");
+		// FULL LOCALE IS SOMETIMES UNDEFINED, USE ICL_LANGUAGE_CODE AS FALLBACK
+		$really_simple_share_option['locale'] = ($full_locale!='') ? $full_locale : ICL_LANGUAGE_CODE;
+	}
+}
+
+
 function really_simple_share_options () {
 
 	$option_name = 'really_simple_share';
@@ -629,25 +645,25 @@ function really_simple_share_options () {
 						';
 						break;
 					case 'google1': 
-						$options = 'Show counter: <input type="checkbox" name="really_simple_share_google1_count" '.$google1_count.' />';
+						$options = __('Show counter', 'really-simple-share').': <input type="checkbox" name="really_simple_share_google1_count" '.$google1_count.' />';
 						break;
 					case 'linkedin': 
-						$options = 'Show counter: <input type="checkbox" name="really_simple_share_linkedin_count" '.$linkedin_count.' />';
+						$options = __('Show counter', 'really-simple-share').': <input type="checkbox" name="really_simple_share_linkedin_count" '.$linkedin_count.' />';
 						break;
 					case 'pinterest': 
-						$options = 'Show counter: <input type="checkbox" name="really_simple_share_pinterest_count" '.$pinterest_count.' />';
+						$options = __('Show counter', 'really-simple-share').': <input type="checkbox" name="really_simple_share_pinterest_count" '.$pinterest_count.' />';
 						break;
 					case 'buffer': 
-						$options = 'Show counter: <input type="checkbox" name="really_simple_share_buffer_count" '.$buffer_count.' />';
+						$options = __('Show counter', 'really-simple-share').': <input type="checkbox" name="really_simple_share_buffer_count" '.$buffer_count.' />';
 						break;
 					case 'tipy': 
-						$options = 'Tipy site id: 
+						$options = __('Tipy site id', 'really-simple-share').': 
 							<input type="text" name="really_simple_share_tipy_uid" value="'.stripslashes($option['tipy_uid']).'" style="width:80px; margin:0; padding:0;" />
 							<span class="description">'.__("(mandatory)", 'really-simple-share' ).'</span>
 						';
 						break;
 					case 'twitter': 
-						$options = 'Show counter: <input type="checkbox" name="really_simple_share_twitter_count" '.$twitter_count.' />';
+						$options = __('Show counter', 'really-simple-share').': <input type="checkbox" name="really_simple_share_twitter_count" '.$twitter_count.' />';
 						break;
 				}
 				$li_class = ($checked) ? 'button_active' : 'button_inactive';
@@ -657,7 +673,7 @@ function really_simple_share_options () {
 							<b>'.$active_buttons[$name].'</b>
 						</div>
 						<div style="float:left; width:120px;">
-							Width: <input type="text" name="really_simple_share_width_'.$name.'" value="'.stripslashes($option['width_buttons'][$name]).'" style="width:35px; margin:0; padding:0; text-align:right;" />px	
+							'.__('Width', 'really-simple-share').': <input type="text" name="really_simple_share_width_'.$name.'" value="'.stripslashes($option['width_buttons'][$name]).'" style="width:35px; margin:0; padding:0; text-align:right;" />px	
 						</div>
 						<div style="float:left; width:260px;">
 							'.$options.'
@@ -806,7 +822,7 @@ function really_simple_share_options () {
 					<option value="ps_AF" '. ($option['locale'] == 'ps_AF' ? 'selected="1"' : '') . '>Pashto</option>
 					<option value="tl_ST" '. ($option['locale'] == 'tl_ST' ? 'selected="1"' : '') . '>Klingon</option>						
 				</select><br />
-				<span class="description">'.__("Please note that not all languages are available for every button", 'really-simple-share' ).'
+				<span class="description">'.__("Please note that not all languages are available for every button. If the WPML plugin is active, language is set automatically", 'really-simple-share' ).'
 			</td></tr>
 			<tr><td>'.__("Prepend text on the above line", 'really-simple-share' ).':</td>
 			<td><input type="text" name="really_simple_share_prepend_above" value="'.stripslashes($option['prepend_above']).'" size="50" /><br />
