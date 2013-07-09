@@ -4,7 +4,7 @@ Plugin Name: Really simple Facebook Twitter share buttons
 Plugin URI: http://www.whiletrue.it
 Description: Puts Facebook, Twitter, LinkedIn, Google "+1", Pinterest and other share buttons of your choice above or below your posts.
 Author: WhileTrue
-Version: 2.9.5
+Version: 2.10
 Author URI: http://www.whiletrue.it
 */
 
@@ -72,7 +72,17 @@ function really_simple_share_scripts () {
 	}
 
 	if ($really_simple_share_option['active_buttons']['pinterest']) {
-		$out .= '<script type="text/javascript" src="//assets.pinterest.com/js/pinit.js"></script>';
+		$hover = ($really_simple_share_option['pinterest_hover']!='') ? ' p.setAttribute(\'data-pin-hover\', true); ' : '';
+		$out .= '<script type="text/javascript">
+			(function(d){
+			  var f = d.getElementsByTagName(\'SCRIPT\')[0], p = d.createElement(\'SCRIPT\');
+			  p.type = \'text/javascript\';
+			  '.$hover.'
+			  p.async = true;
+			  p.src = \'//assets.pinterest.com/js/pinit.js\';
+			  f.parentNode.insertBefore(p, f);
+			}(document));
+			</script>';
 	}
 	echo $out;
 }
@@ -198,11 +208,9 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 	if ($filter!='shortcode') {
 		if (is_single()) {
 			if (!$option['show_in']['posts']) { return $content; }
-		} else if (is_singular()) {
-			if (!$option['show_in']['pages']) {
-				return $content;
-			}
-		} else if (is_home()) {
+		} else if (is_singular() and !is_front_page()) {
+			if (!$option['show_in']['pages']) {	return $content; }
+		} else if (is_home() or is_front_page()) {
 			if (!$option['show_in']['home_page']) {	return $content; }
 		} else if (is_tag()) {
 			if (!$option['show_in']['tags']) { return $content; }
@@ -231,19 +239,10 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 		$author = get_the_author_meta('nickname');
 	}	
 	
-	// PREPEND ABOVE TEXT
-	$out = '';
-	if ($option['prepend_above']!='') {
-		$out .= '<div class="really_simple_share_prepend_above robots-nocontent snap_nopreview">'.stripslashes($option['prepend_above']).'</div>';
-	}
-
 	$height = ($option['layout']=='button') ? 33 : 66;
-	$out .= '<div style="min-height:'.$height.'px;" class="really_simple_share really_simple_share_'.$option['layout'].' robots-nocontent snap_nopreview">';
+	$div_button_open = '<div style="min-height:'.$height.'px;" class="really_simple_share really_simple_share_'.$option['layout'].' robots-nocontent snap_nopreview">';
 
-	// PREPEND INLINE TEXT
-	if ($option['prepend_inline']!='') {
-		$out .= '<div class="really_simple_share_prepend_inline">'.stripslashes($option['prepend_inline']).'</div>';
-	}
+	$out = '';
 
 	foreach (explode(',',$option['sort']) as $name) {
 		if (!$option['active_buttons'][$name]) {
@@ -336,7 +335,10 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 			$out .= '<script type="text/javascript" src="http://www.reddit.com/static/button/button'.$option_layout.'.js?newwindow=1&amp;url='.$link.'"></script>';
 		}	
 		else if ($name == 'email') {
-			$out .= '<a href="mailto:?subject='.rawurlencode($title).'&amp;body='.rawurlencode($title.' - '.$link).'"><img src="'.plugins_url('images/email.png',__FILE__).'" alt="Email" title="Email" /> '.stripslashes($option['email_label']).'</a>';
+			$out .= '<a href="mailto:?subject='.rawurlencode($title).'&amp;body='.rawurlencode($title.' - '.$link).'"><img src="'.plugins_url('images/email.png',__FILE__).'" alt="'.__('Email', 'really-simple-share').'" title="'.__('Email', 'really-simple-share').'" /> '.stripslashes($option['email_label']).'</a>';
+		}
+		else if ($name == 'print') {
+			$out .= '<a href="javascript:window.print();void(0);"><img src="'.plugins_url('images/print.png',__FILE__).'" alt="'.__('Print', 'really-simple-share').'" title="'.__('Print', 'really-simple-share').'" /> '.stripslashes($option['print_label']).'</a>';
 		}
 		else if ($name == 'google1') {
 			$option_layout = ($option['layout']=='button') ? 'medium' : 'tall';
@@ -347,7 +349,7 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 			$option_layout = ($option['layout']=='button') ? 'button:compact' : '';
 			$out .= '<a class="FlattrButton" style="display:none;" href="'.$link.'" title="'.strip_tags($title).'" rev="flattr;uid:'.$option['flattr_uid'].';language:'.$option['locale'].';category:text;tags:'.strip_tags(get_the_tag_list('', ',', '')).';'.$option_layout.';">'.$title.'</a>';
 		}
-		else if ($name == 'pinterest') {
+		else if ($name == 'pinterest' and $option['pinterest_hover']!='hide') {
 			$option_layout = ($option['layout']=='button') ? 'beside' : 'above';
 			$option_layout = ($option['pinterest_count']) ? $option_layout : 'none';
 
@@ -438,9 +440,9 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 			$data_related = (count($related)>0) ? ' data-related="'.implode(',',$related).'"' : '';
 			
 			$locale = ($option['locale']!='en_US') ? 'data-lang="'.substr($option['locale'],0,2).'"' : '';
-			$out .= '<a href="https://twitter.com/share" class="twitter-share-button" data-count="'.$data_count.'" 
-						data-text="'.strip_tags($title).stripslashes($option['twitter_text']).'" data-url="'.$link.'" 
-						data-via="'.stripslashes($option['twitter_via']).'" '.$locale.' '.$data_related.'></a>';
+			$out .= '<a href="https://twitter.com/share" class="twitter-share-button" data-count="'.$data_count.'" '
+						.' data-text="'.strip_tags($title).stripslashes($option['twitter_text']).'" data-url="'.$link.'" '
+						.' data-via="'.stripslashes($option['twitter_via']).'" '.$locale.' '.$data_related.'></a>';
 		}
 		
 		// CLOSE THE BUTTON DIV
@@ -454,15 +456,36 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 	$last_execution = $filter;
 	
 	if ($filter=='shortcode') {
-		return $out;
+		return $div_button_open.$out;
+	}
+
+	// ABOVE PREPEND ABOVE TEXT
+	$above_prepend_above = '';
+	if ($option['above_prepend_above']!='') {
+		$above_prepend_above = '<div class="really_simple_share_prepend_above robots-nocontent snap_nopreview">'.stripslashes($option['above_prepend_above']).'</div>';
+	}
+	// BELOW PREPEND ABOVE TEXT
+	$below_prepend_above = '';
+	if ($option['below_prepend_above']!='') {
+		$below_prepend_above = '<div class="really_simple_share_prepend_above robots-nocontent snap_nopreview">'.stripslashes($option['below_prepend_above']).'</div>';
+	}
+	// ABOVE PREPEND INLINE TEXT
+	$above_prepend_inline = '';
+	if ($option['above_prepend_inline']!='') {
+		$above_prepend_inline = '<div class="really_simple_share_prepend_inline">'.stripslashes($option['above_prepend_inline']).'</div>';
+	}
+	// BELOW PREPEND INLINE TEXT
+	$below_prepend_inline = '';
+	if ($option['below_prepend_inline']!='') {
+		$below_prepend_inline = '<div class="really_simple_share_prepend_inline">'.stripslashes($option['below_prepend_inline']).'</div>';
 	}
 
 	if ($option['position']=='both') {
-		return $out.$content.$out;
+		return $above_prepend_above.$div_button_open.$above_prepend_inline.$out . $content . $below_prepend_above.$div_button_open.$below_prepend_inline.$out;
 	} else if ($option['position']=='below') {
-		return $content.$out;
+		return $content . $below_prepend_above.$div_button_open.$below_prepend_inline.$out;
 	} else {
-		return $out.$content;
+		return $above_prepend_above.$div_button_open.$above_prepend_inline.$out . $content;
 	}
 }
 
@@ -504,6 +527,7 @@ function really_simple_share_options () {
 		'facebook_share'=>'(old) Facebook Share',
 		'pinzout' => 'Pinzout',
 		'rss' => 'Comments RSS Feed',
+		'print' => 'Print',
 	);	
 
 	$show_in = array(
@@ -534,8 +558,10 @@ function really_simple_share_options () {
 		$option['position'] = esc_html($_POST['really_simple_share_position']);
 		$option['layout'] = esc_html($_POST['really_simple_share_layout']);
 		$option['locale'] = esc_html($_POST['really_simple_share_locale']);
-		$option['prepend_above']  = esc_html($_POST['really_simple_share_prepend_above']);
-		$option['prepend_inline'] = esc_html($_POST['really_simple_share_prepend_inline']);
+		$option['above_prepend_above']  = esc_html($_POST['really_simple_share_above_prepend_above']);
+		$option['above_prepend_inline'] = esc_html($_POST['really_simple_share_above_prepend_inline']);
+		$option['below_prepend_above']  = esc_html($_POST['really_simple_share_below_prepend_above']);
+		$option['below_prepend_inline'] = esc_html($_POST['really_simple_share_below_prepend_inline']);
 		$option['disable_default_styles'] = (isset($_POST['really_simple_share_disable_default_styles']) and $_POST['really_simple_share_disable_default_styles']=='on') ? true : false;
 		$option['disable_excerpts'] = (isset($_POST['really_simple_share_disable_excerpts']) and $_POST['really_simple_share_disable_excerpts']=='on') ? true : false;
 		$option['use_shortlink'] = (isset($_POST['really_simple_share_use_shortlink']) and $_POST['really_simple_share_use_shortlink']=='on') ? true : false;
@@ -548,8 +574,9 @@ function really_simple_share_options () {
 		$option['facebook_share_text'] = esc_html($_POST['really_simple_share_facebook_share_text']);
 		$option['rss_text'] = esc_html($_POST['really_simple_share_rss_text']);
 		$option['pinterest_multi_image'] = (isset($_POST['really_simple_share_pinterest_multi_image']) and $_POST['really_simple_share_pinterest_multi_image']=='on') ? true : false;
-		$option['pinterest_old_include'] = (isset($_POST['really_simple_share_pinterest_old_include']) and $_POST['really_simple_share_pinterest_old_include']=='on') ? true : false;
+		$option['pinterest_hover'] = esc_html($_POST['really_simple_share_pinterest_hover']);
 		$option['email_label'] = esc_html($_POST['really_simple_share_email_label']);
+		$option['print_label'] = esc_html($_POST['really_simple_share_print_label']);
 		$option['flattr_uid']  = esc_html($_POST['really_simple_share_flattr_uid']);
 		$option['google1_count']   = (isset($_POST['really_simple_share_google1_count'])   and $_POST['really_simple_share_google1_count']  =='on') ? true : false;
 		$option['linkedin_count']  = (isset($_POST['really_simple_share_linkedin_count'])  and $_POST['really_simple_share_linkedin_count'] =='on') ? true : false;
@@ -579,6 +606,10 @@ function really_simple_share_options () {
 
 	$sel_like      = ($option['facebook_like_text']=='like'     ) ? 'selected="selected"' : '';
 	$sel_recommend = ($option['facebook_like_text']=='recommend') ? 'selected="selected"' : '';
+
+	$sel_pinterest_hover_no    = ($option['pinterest_hover']=='')      ? 'selected="selected"' : '';
+	$sel_pinterest_hover_hover = ($option['pinterest_hover']=='hover') ? 'selected="selected"' : '';
+	$sel_pinterest_hover_hide  = ($option['pinterest_hover']=='hide' ) ? 'selected="selected"' : '';
 	
 	$disable_default_styles = ($option['disable_default_styles']) ? 'checked="checked"' : '';
 	$disable_excerpts = ($option['disable_excerpts']) ? 'checked="checked"' : '';
@@ -587,7 +618,6 @@ function really_simple_share_options () {
 	$facebook_like_html5 = ($option['facebook_like_html5']) ? 'checked="checked"' : '';
 	$facebook_like_show_send_button = ($option['facebook_like_send']) ? 'checked="checked"' : '';
 	$pinterest_multi_image = ($option['pinterest_multi_image']) ? 'checked="checked"' : '';
-	$pinterest_old_include = ($option['pinterest_old_include']) ? 'checked="checked"' : '';
 	$google1_count = ($option['google1_count']) ? 'checked="checked"' : '';
 	$linkedin_count = ($option['linkedin_count']) ? 'checked="checked"' : '';
 	$pinterest_count = ($option['pinterest_count']) ? 'checked="checked"' : '';
@@ -644,9 +674,19 @@ function really_simple_share_options () {
 							<input type="text" name="really_simple_share_facebook_like_appid" value="'.stripslashes($option['facebook_like_appid']).'" style="width:120px; margin:0; padding:0;" />
 						';
 						break;
+					case 'email': 
+						$options = __('Button text').':
+							<input type="text" name="really_simple_share_email_label" value="'.stripslashes($option['email_label']).'" size="25" style="width:160px; margin:0; padding:0;" />
+						';
+						break;
 					case 'facebook_share': 
 						$options = __('Button text').':
 							<input type="text" name="really_simple_share_facebook_share_text" value="'.stripslashes($option['facebook_share_text']).'" style="width:160px; margin:0; padding:0;" />
+						';
+						break;
+					case 'print': 
+						$options = __('Button text').':
+							<input type="text" name="really_simple_share_print_label" value="'.stripslashes($option['print_label']).'" size="25" style="width:160px; margin:0; padding:0;" />
 						';
 						break;
 					case 'rss': 
@@ -840,17 +880,33 @@ function really_simple_share_options () {
 				</select><br />
 				<span class="description">'.__("Please note that not all languages are available for every button. If the WPML plugin is active, language is set automatically", 'really-simple-share' ).'
 			</td></tr>
-			<tr><td>'.__("Prepend text on the above line", 'really-simple-share' ).':</td>
-			<td><input type="text" name="really_simple_share_prepend_above" value="'.stripslashes($option['prepend_above']).'" size="50" /><br />
-				<span class="description">'.__("Optional text shown above the buttons, e.g. 'If you liked this post, say thanks by sharing it:'", 'really-simple-share' ).'</span>
-			</td></tr>
-			<tr><td>'.__("Prepend text inline", 'really-simple-share' ).':</td>
-			<td><input type="text" name="really_simple_share_prepend_inline" value="'.stripslashes($option['prepend_inline']).'" size="25" /><br />
-				<span class="description">'.__("Optional text shown inline before the buttons, e.g. 'Share this:'", 'really-simple-share' ).'</span>
-			</td></tr>
 			</table>
 		</div>
 		</div>'
+		.really_simple_share_box_content(__('Call to action, above the post', 'really-simple-share'), 
+			array(
+				__('On the above line', 'really-simple-share')=>'
+					<input type="text" name="really_simple_share_above_prepend_above" value="'.stripslashes($option['above_prepend_above']).'" size="50" /><br />
+				<span class="description">'.__("Optional text shown above the buttons, e.g. 'If you liked this post, say thanks by sharing it:'", 'really-simple-share' ).'</span>
+				',
+				__('Inline', 'really-simple-share')=>'
+					<input type="text" name="really_simple_share_above_prepend_inline" value="'.stripslashes($option['above_prepend_inline']).'" size="25" /><br />
+				<span class="description">'.__("Optional text shown inline before the buttons, e.g. 'Share this:'", 'really-simple-share' ).'</span>
+				',
+			)
+		)
+		.really_simple_share_box_content(__('Call to action, below the post', 'really-simple-share'), 
+			array(
+				__('On the above line', 'really-simple-share')=>'
+					<input type="text" name="really_simple_share_below_prepend_above" value="'.stripslashes($option['below_prepend_above']).'" size="50" /><br />
+				<span class="description">'.__("Optional text shown above the buttons, e.g. 'If you liked this post, say thanks by sharing it:'", 'really-simple-share' ).'</span>
+				',
+				__('Inline', 'really-simple-share')=>'
+					<input type="text" name="really_simple_share_below_prepend_inline" value="'.stripslashes($option['below_prepend_inline']).'" size="25" /><br />
+				<span class="description">'.__("Optional text shown inline before the buttons, e.g. 'Share this:'", 'really-simple-share' ).'</span>
+				',
+			)
+		)
 		.really_simple_share_box_content(__('Advanced options', 'really-simple-share'), 
 			array(
 				__('Load scripts at the bottom of the body', 'really-simple-share')=>'
@@ -887,17 +943,17 @@ function really_simple_share_options () {
 				'
 			)
 		)
-		.really_simple_share_box_content(__('Email button options', 'really-simple-share'), 
-			array(__('Email label', 'really-simple-share')=>'
-					<input type="text" name="really_simple_share_email_label" value="'.stripslashes($option['email_label']).'" size="25" /><br />
-					<span class="description">'.__("This optional text is added next to the email button, e.g. 'forward to a friend'", 'really-simple-share' ).'</span>
-				'
-			)
-		)
 		.really_simple_share_box_content(__('Pinterest button options', 'really-simple-share'), 
 			array(__('Always use multiple image selector', 'really-simple-share')=>'
 					<input type="checkbox" name="really_simple_share_pinterest_multi_image" '.$pinterest_multi_image.' /> 
 				',
+				__('Use the PinIt image hover button', 'really-simple-share')=>'
+				<select name="really_simple_share_pinterest_hover">
+				<option value=""      '.$sel_pinterest_hover_no.'    > '.__('no',  'really-simple-share' ).'</option>
+				<option value="hover" '.$sel_pinterest_hover_hover.' > '.__('yes', 'really-simple-share' ).'</option>
+				<option value="hide"  '.$sel_pinterest_hover_hide.'  > '.__('yes, and hide PinIt on the button bar', 'really-simple-share' ).'</option>
+				</select>
+				'
 			)
 		)
 		.really_simple_share_box_content(__('Twitter button options', 'really-simple-share'), 
@@ -1072,6 +1128,22 @@ function really_simple_share_get_options_stored () {
 		$option['width_buttons']['pinzout'] = '75'; 
 		$option['width_buttons']['rss']     = '150'; 
 		$option['sort'] .= ',pinzout,rss';
+	} else if (strpos($option['sort'], 'print')===false) {
+		// Versions below 2.20 compatibility
+		$option['width_buttons']['print'] = '40'; 
+		$option['sort'] .= ',print';
+	} else if ($option['prepend_above']!='' or $option['prepend_inline']!='') {
+		// Versions below 2.10 compatibility
+		if ($option['prepend_above']!='') {
+			$option['above_prepend_above'] = $option['prepend_above'];
+			$option['below_prepend_above'] = $option['prepend_above']; 
+			$option['prepend_above'] = '';
+		}
+		if ($option['prepend_inline']!='') {
+			$option['above_prepend_inline'] = $option['prepend_inline'];
+			$option['below_prepend_inline'] = $option['prepend_inline']; 
+			$option['prepend_inline'] = '';
+		}
 	}	
 	
 	// MERGE DEFAULT AND STORED OPTIONS
@@ -1092,19 +1164,21 @@ function really_simple_share_get_options_default () {
 	$option['active_buttons'] = array('facebook_like'=>true, 'twitter'=>true, 'google1'=>true,  
 		'linkedin'=>false, 'digg'=>false, 'stumbleupon'=>false, 'hyves'=>false, 'email'=>false, 
 		'reddit'=>false, 'flattr'=>false, 'pinterest'=>false, 'tipy'=>false, 'buffer'=>false, 
-		'tumblr'=>false, 'facebook_share'=>false,  'pinzout'=>false, 'rss'=>false);
+		'tumblr'=>false, 'facebook_share'=>false,  'pinzout'=>false, 'rss'=>false, 'print'=>false);
 	$option['width_buttons'] = array('facebook_like'=>'100', 'twitter'=>'100', 'linkedin'=>'100', 
 		'digg'=>'100', 'stumbleupon'=>'100', 'hyves'=>'100', 'email'=>'40', 
 		'reddit'=>'100', 'google1'=>'80', 'flattr'=>'120', 'pinterest'=>'90', 'tipy'=>'120', 
-		'buffer'=>'100', 'tumblr'=>'100', 'facebook_share'=>'100', 'pinzout'=>'75', 'rss'=>'150');
+		'buffer'=>'100', 'tumblr'=>'100', 'facebook_share'=>'100', 'pinzout'=>'75', 'rss'=>'150', 'print'=>'40');
 	$option['sort'] = implode(',',array('facebook_like', 'twitter', 'google1', 'linkedin', 'pinterest', 'digg', 'stumbleupon', 'hyves', 'email', 
-		'reddit', 'flattr', 'tipy', 'buffer', 'tumblr', 'facebook_share', 'pinzout', 'rss'));
+		'reddit', 'flattr', 'tipy', 'buffer', 'tumblr', 'facebook_share', 'pinzout', 'rss', 'print'));
 	$option['position'] = 'below';
 	$option['show_in'] = array('posts'=>true, 'pages'=>true, 'home_page'=>true, 'tags'=>true, 'categories'=>true, 'dates'=>true, 'authors'=>true, 'search'=>true);
 	$option['layout'] = 'button';
 	$option['locale'] = 'en_US';
-	$option['prepend_above']  = '';
-	$option['prepend_inline'] = '';
+	$option['above_prepend_above']  = '';
+	$option['above_prepend_inline'] = '';
+	$option['below_prepend_above']  = '';
+	$option['below_prepend_inline'] = '';
 	$option['disable_default_styles'] = false;
 	$option['disable_excerpts'] = false;
 	$option['use_shortlink'] = false;
@@ -1118,9 +1192,11 @@ function really_simple_share_get_options_default () {
 	$option['flattr_uid'] = '';
 	$option['google1_count'] = true;
 	$option['email_label'] = '';
+	$option['print_label'] = '';
 	$option['linkedin_count'] = true;
 	$option['pinterest_count'] = true;
 	$option['pinterest_multi_image'] = false;
+	$option['pinterest_hover'] = '';
 	$option['rss_text'] = 'comments feed';
 	$option['tipy_uid'] = '';
 	$option['twitter_count'] = true;

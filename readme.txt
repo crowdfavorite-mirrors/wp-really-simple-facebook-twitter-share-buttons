@@ -3,8 +3,8 @@ Contributors: whiletrue
 Donate link: http://www.whiletrue.it/
 Tags: facebook, twitter, facebook share, twitter share, facebook share button, twitter share button, linkedin, google +1, +1, pinterest, google buzz, buzz, digg, flattr, stumbleupon, hyves, links, post, page, mail, email, reddit, tipy, tumblr, buffer, pinzout, shortcode
 Requires at least: 2.9+
-Tested up to: 3.5.1
-Stable tag: 2.9.5
+Tested up to: 3.5.2
+Stable tag: 2.10
 
 Puts Facebook, Twitter, LinkedIn, Google "+1", Pinterest, Tumblr and other share buttons of your choice above or below your posts.
 
@@ -47,10 +47,10 @@ If you want to hide the share buttons inside selected posts, set a "really_simpl
 
 = News =
 
-*New* in version 2.9:
+*New* in version 2.10:
 
-* Pinterest button complete rewrite
-* Pinterest button fallback: when no media is found, shows the multiple image selector
+* Different calls to action, above and below the post
+* Print button, with optional label
 * Code cleaning
 
 = Reference =
@@ -110,6 +110,24 @@ We'll see!
 
 
 == Changelog ==
+
+= 2.10 =
+* Added: Different calls to action, above and below the post
+* Added: Print button, with optional label
+* Changed: code cleaning
+
+= 2.9.9 =
+* Changed: Facebook Html5 popup style cleaning
+
+= 2.9.8 =
+* Fixed: better support of home page buttons selection (thanks Amaury Balmer)
+
+= 2.9.7 =
+* Fixed: Twitter little bug, showed weird text on some websites
+
+= 2.9.6 =
+* Added: Pinterest image hover button
+* Changed: Pinterest async code and cleanup
 
 = 2.9.5 =
 * Added: WhileTrue RSS Feed
