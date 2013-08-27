@@ -33,6 +33,9 @@
 .really_simple_share_facebook_like {
 	margin-top: 1px !important;
 }
+.really_simple_share_facebook_like iframe {
+	max-width:450px;
+}
 .really_simple_share_facebook_like_send {
 	width:50px;
 }

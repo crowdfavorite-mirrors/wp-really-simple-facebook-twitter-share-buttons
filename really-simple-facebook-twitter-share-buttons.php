@@ -4,7 +4,7 @@ Plugin Name: Really simple Facebook Twitter share buttons
 Plugin URI: http://www.whiletrue.it
 Description: Puts Facebook, Twitter, LinkedIn, Google "+1", Pinterest and other share buttons of your choice above or below your posts.
 Author: WhileTrue
-Version: 2.10
+Version: 2.10.5
 Author URI: http://www.whiletrue.it
 */
 
@@ -75,12 +75,23 @@ function really_simple_share_scripts () {
 		$hover = ($really_simple_share_option['pinterest_hover']!='') ? ' p.setAttribute(\'data-pin-hover\', true); ' : '';
 		$out .= '<script type="text/javascript">
 			(function(d){
-			  var f = d.getElementsByTagName(\'SCRIPT\')[0], p = d.createElement(\'SCRIPT\');
-			  p.type = \'text/javascript\';
-			  '.$hover.'
-			  p.async = true;
-			  p.src = \'//assets.pinterest.com/js/pinit.js\';
-			  f.parentNode.insertBefore(p, f);
+				var pinit_already_loaded = false;
+				if(document.getElementsByClassName && document.getElementsByTagName) {
+					var pinit_class_tags = document.getElementsByClassName("really_simple_share_pinterest");
+					for(i=0; i < pinit_class_tags.length; i++) {
+						if(pinit_class_tags[i].getElementsByTagName("span").length > 0) {
+							pinit_already_loaded = true;
+						}	
+					}
+				}
+				if (!pinit_already_loaded) {
+				  var f = d.getElementsByTagName(\'SCRIPT\')[0], p = d.createElement(\'SCRIPT\');
+				  p.type = \'text/javascript\';
+				  '.$hover.'
+				  p.async = true;
+				  p.src = \'//assets.pinterest.com/js/pinit.js\';
+				  f.parentNode.insertBefore(p, f);
+				}
 			}(document));
 			</script>';
 	}
@@ -397,7 +408,7 @@ function really_simple_share ($content, $filter, $link='', $title='', $author=''
 			}
 			
 			// FIXED: ADD THE PROTOCOL OR IT WON'T WORK IN SOME SITES
-			$out .= '<a data-pin-config="'.$option_layout.'" href="https://pinterest.com/pin/create/button/'.$appended_url.'" data-pin-do="'.$data_pin_do.'" ><img src="//assets.pinterest.com/images/pidgets/pin_it_button.png" /></a>';
+			$out .= '<a data-pin-config="'.$option_layout.'" href="https://pinterest.com/pin/create/button/'.$appended_url.'" data-pin-do="'.$data_pin_do.'" ><img src="https://assets.pinterest.com/images/pidgets/pin_it_button.png" /></a>';
 		}
 		else if ($name == 'tipy') {
 			$option_layout = ($option['layout']=='button') ? 'tipy_button_compact' : 'tipy_button';
@@ -544,7 +555,7 @@ function really_simple_share_options () {
 	$out = '';
 	
 	// See if the user has posted us some information
-	if( isset($_POST['really_simple_share_position'])) {
+	if( isset($_POST['really_simple_share_position']) && check_admin_referer('really_simple_share_settings','really_simple_share_settings_nonce')) {
 		$option = array();
 
 		foreach (array_keys($active_buttons) as $item) {
@@ -977,10 +988,10 @@ function really_simple_share_options () {
 				',
 			)
 		)
+		.wp_nonce_field('really_simple_share_settings','really_simple_share_settings_nonce')
 		.'<p class="submit">
 			<input type="submit" name="Submit" class="button-primary" value="'.esc_attr('Save Changes').'" />
 		</p>
-
 		</form>
 
 	</div>
