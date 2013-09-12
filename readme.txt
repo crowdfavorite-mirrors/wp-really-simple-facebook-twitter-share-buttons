@@ -1,10 +1,10 @@
 === Really simple Facebook Twitter share buttons ===
 Contributors: whiletrue
 Donate link: http://www.whiletrue.it/
-Tags: facebook, twitter, facebook share, twitter share, facebook share button, twitter share button, linkedin, google +1, +1, pinterest, google buzz, buzz, digg, flattr, stumbleupon, hyves, links, post, page, mail, email, reddit, tipy, tumblr, buffer, pinzout, shortcode
+Tags: facebook, twitter, facebook share, twitter share, facebook share button, twitter share button, linkedin, google +1, +1, pinterest, google buzz, buzz, digg, flattr, stumbleupon, hyves, links, post, page, mail, email, reddit, tipy, tumblr, buffer, pinzout, shortcode, youtube, print, rss
 Requires at least: 2.9+
 Tested up to: 3.6
-Stable tag: 2.10.5
+Stable tag: 2.11.2
 
 Puts Facebook, Twitter, LinkedIn, Google "+1", Pinterest, Tumblr and other share buttons of your choice above or below your posts.
 
@@ -16,7 +16,7 @@ In contrast to several other sharing plugin, this one aims to use only original 
 There is no other service in the middle, you are not required to register or get a key to use it. Enjoy!
 
 Facebook Like, Twitter and Google +1 share buttons are loaded by default. 
-Other buttons, including Digg, Facebook Send, Flattr, LinkedIn, Pinterest, Google Buzz, Stumbleupon, Hyves, Email, Reddit, Tipy, Tumblr, Buffer, Pinzout (and the deprecated Facebook Share button) can be added through the `Settings->Really simple share` menu.
+Other buttons, including Digg, Facebook Send, Flattr, LinkedIn, Pinterest, Google Buzz, Stumbleupon, Youtube, Hyves, Print, Email, RSS, Reddit, Tipy, Tumblr, Buffer, Pinzout (and the deprecated Facebook Share button) can be added through the `Settings->Really simple share` menu.
 
 Please be careful when selecting the `Show buttons in these pages` options : it can interact badly with other slide/fade/carousel/sidebar active plugins.
 
@@ -110,6 +110,18 @@ We'll see!
 
 
 == Changelog ==
+
+= 2.11.2 =
+* Fixed: Plugin updates bug
+* Fixed: Facebook like status bug (thanks laserjobs)
+* Fixed: Pinterest title bug (thanks laserjobs)
+
+= 2.11.1 =
+* Added: Email custom subject
+* Fixed: Facebook like status bug
+
+= 2.11 =
+* Added: Youtube channel button (experimental)
 
 = 2.10.5 =
 * Fixed: CSRF vulnerability on settings page
