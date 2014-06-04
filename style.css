@@ -24,14 +24,18 @@
 .really_simple_share div:first-child {
 	padding-left:0;
 }
+/* AFTER THEM, CLEAR THE FLOATING */
+.really_simple_share_clearfix {
+  clear:both;
+}
 
 /* FACEBOOK BUTTONS SPECIFIC STYLES */
 .really_simple_share_facebook_share a {
 	background: url('images/facebook-share.png') no-repeat center left;
 	padding-left: 20px;
 }
-.really_simple_share_facebook_like {
-	margin-top: 1px !important;
+.really_simple_share_facebook_share_new {
+	line-height: normal;
 }
 .really_simple_share_facebook_like iframe {
 	max-width:450px;
@@ -62,4 +66,13 @@
 }
 .really_simple_share_box .really_simple_share_pinterest {
 	margin-top: 20px;
+}
+.really_simple_share_specificfeeds {
+  margin-top: -3px;
+}
+.really_simple_share_specificfeeds a {
+  text-decoration: none;
+}
+.really_simple_share_specificfeeds .super, .really_simple_share_specificfeeds img {
+  vertical-align: middle;
 }
